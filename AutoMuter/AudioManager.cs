@@ -628,10 +628,15 @@ namespace AutoMuter
         {
             get
             {
-                CheckDisposed();
-                int i;
-                _ctl.GetProcessId(out i);
-                return i;
+                try
+                {
+                    CheckDisposed();
+                    int i;
+                    _ctl.GetProcessId(out i);
+                    return i;
+                }
+                catch { }
+                return 0;
             }
         }
 
@@ -639,7 +644,12 @@ namespace AutoMuter
         {
             get
             {
-                return Process == null ? "" : Process.MainModule.FileName;
+                try
+                {
+                    return (Process == null) ? "" : Process.MainModule.FileName;
+                }
+                catch { }
+                return "";
             }
         }
 

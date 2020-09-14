@@ -96,12 +96,15 @@ namespace AutoMuter
                 if (p == null) { continue; }
 
                 // check target
-                filePath = p.MainModule.FileName.ToString();
+                // try-catch for win10
+                try { filePath = p.MainModule.FileName.ToString(); }
+                catch { continue; }
                 fileName = Path.GetFileName(filePath);
                 AudioSession audioSession = AudioUtilities.GetProcessSession(p);
                 if (!this.TargetRx.IsMatch(filePath) || audioSession == null)
                 {
                     if (this.debug) { textBox.Text = "[ ] " + fileName + "\r\n" + textBox.Text; }    // debug log
+                    audioSession.Dispose();
                     continue;
                 }
 

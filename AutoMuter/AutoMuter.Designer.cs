@@ -49,6 +49,7 @@
             this.textBox.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
             this.textBox.Size = new System.Drawing.Size(440, 258);
             this.textBox.TabIndex = 1;
+            this.textBox.Enabled = false;
             // 
             // notifyIcon
             // 

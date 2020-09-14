@@ -15,14 +15,22 @@ namespace AutoMuter
         [STAThread]
         static void Main()
         {
-            Mutex mutex = new Mutex(false, "SingletonWinAppMutexAutoMuter", out bool createdNew);
-            if (createdNew)
+            try
             {
-                Application.EnableVisualStyles();
-                Application.SetCompatibleTextRenderingDefault(false);
-                Application.Run(new AutoMuter());
+                Mutex mutex = new Mutex(false, "SingletonWinAppMutexAutoMuter", out bool createdNew);
+                if (createdNew)
+                {
+                    Application.EnableVisualStyles();
+                    Application.SetCompatibleTextRenderingDefault(false);
+                    Application.Run(new AutoMuter());
+                }
+                mutex.Dispose();
             }
-            mutex.Dispose();
+            catch (Exception e)
+            {
+                System.IO.File.WriteAllText("./AutoMuter.log", e.ToString());
+                Console.WriteLine(e);
+            }
         }
     }
 }
