@@ -1,1 +1,1 @@
-AutoMuter
+AutoMuter將視窗移至背景時靜音回到前景時解除靜音並可在ini檔內設定Regex過濾目標My code works... I don't know why.jpgDownload:https://github.com/z1022001/AutoMuter/raw/master/AutoMuter/bin/Release/AutoMuter.exe
