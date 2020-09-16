@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -16,11 +16,19 @@ namespace AutoMuter
 {
     public partial class AutoMuter : Form
     {
+        //[DllImport("kernel32.dll")] private static extern bool AllocConsole();
+        [DllImport("Kernel32")] public static extern void FreeConsole();
+
         public AutoMuter()
         {
             InitializeComponent();
             this.notifyIcon.Visible = true;
             ReadConfig();
+
+            if (!this.debug)
+            {
+                FreeConsole();
+            }
         }
 
         private void AutoMuter_Load(object sender, EventArgs e)
@@ -79,45 +87,47 @@ namespace AutoMuter
             SetWinEventHook(0x0003, 0x0003, IntPtr.Zero, dele, 0, 0, 0);
             SetWinEventHook(0x0017, 0x0017, IntPtr.Zero, dele, 0, 0, 0);
         }
-        // last active window process
-        private Process lastActiveProcess = null;
         // event when change active window 
         public void WinEventProc(IntPtr hWinEventHook, uint eventType, IntPtr hwnd, int idObject, int idChild, uint dwEventThread, uint dwmsEventTime)
         {
-            if (this.debug) { textBox.Text = "WinEventProc" + "\r\n\r\n" + textBox.Text; }    // debug log
-
-            string filePath, fileName;
-            Process activeProcess = GetForegroundWindowProcess();
-
-            Process[] ps = { activeProcess, lastActiveProcess };
-            for (int i = 1; i >= 0; --i)
+            if (this.debug)
             {
-                Process p = ps[i];
-                if (p == null) { continue; }
+                Console.Clear();
+                Console.WriteLine("WinEventProc");
+            }    // debug log
+
+            //try
+            //{
+            // get active window pid/path
+            //GetWindowThreadProcessId(GetForegroundWindow(), out uint activePID);
+            //string activePath = Process.GetProcessById((int)activePID).MainModule.FileName.ToString();
+            string activePath = GetForegroundWindowProcess().MainModule.FileName.ToString();
+
+            foreach (AudioSession session in AudioUtilities.GetAllSessions())
+            {
+                string filePath = ""; try { filePath = session.FileName; } catch { }
+                string fileName = Path.GetFileName(filePath);
+                //int pid = 0; try { pid = session.ProcessId; } catch { }
 
                 // check target
-                // try-catch for win10
-                try { filePath = p.MainModule.FileName.ToString(); }
-                catch { continue; }
-                fileName = Path.GetFileName(filePath);
-                AudioSession audioSession = AudioUtilities.GetProcessSession(p);
-                if (!this.TargetRx.IsMatch(filePath) || audioSession == null)
+                if (this.TargetRx.IsMatch(filePath))
                 {
-                    if (this.debug) { textBox.Text = "[ ] " + fileName + "\r\n" + textBox.Text; }    // debug log
-                    audioSession.Dispose();
-                    continue;
+                    //bool mute = (pid != activePID && filePath != activePath);
+                    //bool mute = pid != activePID;
+                    bool mute = filePath != activePath;
+                    session.SetApplicationMute(mute);
+                    if (this.debug) { Console.WriteLine((mute ? "[-] " : "[+] ") + fileName); }    // debug log
+                }
+                else if (filePath != "")
+                {
+                    if (this.debug) { Console.WriteLine("[ ] " + fileName); }    // debug log
                 }
 
-                // unmute avtive window
-                // mute inactive window
-                audioSession.SetApplicationMute(i == 1);
-                if (this.debug) { textBox.Text = (i == 1 ? "[-] " : "[+] ") + fileName + "\r\n" + textBox.Text; }    // debug log
-
-                audioSession.Dispose();
+                session.Dispose();
             }
+            //}
+            //catch (Exception e) { Console.WriteLine(e); }
 
-            if (this.lastActiveProcess != null) this.lastActiveProcess.Dispose();
-            this.lastActiveProcess = activeProcess;
             return;
         }
 
